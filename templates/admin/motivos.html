@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_tab = 'admin' %}
+{% set active_sub = 'motivos' %}
+{% block title %}Administração — Motivos{% endblock %}
+{% block content %}
+{% include "admin/_subnav.html" %}
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2><span class="eyebrow">Cadastro</span>Novo motivo de devolução indevida</h2>
+    <form method="post">
+      <div class="field">
+        <label for="descricao">Descrição do motivo</label>
+        <input type="text" id="descricao" name="descricao" placeholder="Ex.: Divergência de dados já sanada anteriormente" required>
+      </div>
+      <button type="submit" class="btn">Adicionar motivo</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2><span class="eyebrow">Lista atual</span>Motivos cadastrados</h2>
+    <div style="max-height:420px;overflow:auto;">
+      {% if motivos %}
+      <table class="ledger">
+        <thead><tr><th>Descrição</th><th></th></tr></thead>
+        <tbody>
+          {% for m in motivos %}
+          <tr>
+            <td>{{ m.descricao }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_excluir_motivo', motivo_id=m.id) }}" onsubmit="return confirm('Remover este motivo? Registros existentes serão mantidos.');">
+                <button type="submit" class="btn danger small">Remover</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty-state">Nenhum motivo cadastrado.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

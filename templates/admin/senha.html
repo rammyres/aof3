@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set active_tab = 'admin' %}
+{% set active_sub = 'senha' %}
+{% block title %}Administração — Senha{% endblock %}
+{% block content %}
+{% include "admin/_subnav.html" %}
+
+<div class="card" style="max-width:420px;">
+  <h2><span class="eyebrow">Segurança</span>Trocar senha de acesso</h2>
+  <form method="post">
+    <div class="field">
+      <label for="senha_atual">Senha atual</label>
+      <input type="password" id="senha_atual" name="senha_atual" required>
+    </div>
+    <div class="field">
+      <label for="senha_nova">Nova senha (mínimo 8 caracteres)</label>
+      <input type="password" id="senha_nova" name="senha_nova" minlength="8" required>
+    </div>
+    <div class="field">
+      <label for="senha_confirmar">Confirmar nova senha</label>
+      <input type="password" id="senha_confirmar" name="senha_confirmar" minlength="8" required>
+    </div>
+    <button type="submit" class="btn">Atualizar senha</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% set active_tab = 'estatisticas' %}
+{% block title %}Estatísticas{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:18px;">
+  <h2><span class="eyebrow">Período de apuração</span>Filtrar estatísticas</h2>
+  <form method="get" class="toolbar">
+    <div class="field" style="margin-bottom:0;min-width:160px;">
+      <label for="inicio">De</label>
+      <input type="date" id="inicio" name="inicio" value="{{ inicio }}">
+    </div>
+    <div class="field" style="margin-bottom:0;min-width:160px;">
+      <label for="fim">Até</label>
+      <input type="date" id="fim" name="fim" value="{{ fim }}">
+    </div>
+    <button type="submit" class="btn">Aplicar período</button>
+    <a href="{{ url_for('estatisticas') }}" class="btn secondary">Ver tudo</a>
+  </form>
+</div>
+
+{% if total == 0 %}
+  <div class="card empty-state">Nenhuma devolução registrada no período selecionado.</div>
+{% else %}
+
+<div class="grid cols-3" style="margin-bottom:18px;">
+  <div class="stamp">
+    <div class="stamp-label">Total no período</div>
+    <div class="stamp-value mono">{{ total }}</div>
+    <div class="stamp-sub">{{ total_geral }} no total geral</div>
+  </div>
+  <div class="stamp">
+    <div class="stamp-label">Prefixo líder</div>
+    <div class="stamp-value mono">{{ por_prefixo[0].label if por_prefixo else '—' }}</div>
+    <div class="stamp-sub">{{ por_prefixo[0].count if por_prefixo else 0 }} devolução(ões)</div>
+  </div>
+  <div class="stamp">
+    <div class="stamp-label">Motivo mais comum</div>
+    <div class="stamp-value" style="font-size:15px;">{{ por_motivo[0].label if por_motivo else '—' }}</div>
+    <div class="stamp-sub">{{ por_motivo[0].count if por_motivo else 0 }} ocorrência(s)</div>
+  </div>
+</div>
+
+<div class="grid cols-2" style="margin-bottom:18px;">
+  <div class="card">
+    <h2><span class="eyebrow">Distribuição</span>Devoluções por motivo</h2>
+    <div class="chart-wrap"><canvas id="chart-motivo"></canvas></div>
+  </div>
+  <div class="card">
+    <h2><span class="eyebrow">Distribuição</span>Devoluções por prefixo (PSO/CENOP)</h2>
+    <div class="chart-wrap"><canvas id="chart-prefixo"></canvas></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:18px;">
+  <h2><span class="eyebrow">Linha do tempo</span>Devoluções ao longo do período (por mês)</h2>
+  <div class="chart-wrap tall"><canvas id="chart-periodo"></canvas></div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2><span class="eyebrow">Ranking</span>Prefixos que mais devolveram indevidamente</h2>
+    <div id="ranking-prefixos"></div>
+  </div>
+  <div class="card">
+    <h2><span class="eyebrow">Ranking</span>Motivos de devolução mais comuns</h2>
+    <div id="ranking-motivos"></div>
+  </div>
+</div>
+
+<script>
+const porMotivo = {{ por_motivo | tojson }};
+const porPrefixo = {{ por_prefixo | tojson }};
+const porPeriodo = {{ por_periodo | tojson }};
+const PALETTE = ['#1B2A4A','#A8762B','#A6403A','#3E5C42','#5C6B7A','#8E97A1','#D9B97C','#6E4A2E','#7A2E2E','#2F4A3D'];
+
+new Chart(document.getElementById('chart-motivo'), {
+  type: 'doughnut',
+  data: {
+    labels: porMotivo.map(m => m.label),
+    datasets: [{ data: porMotivo.map(m => m.count), backgroundColor: PALETTE, borderWidth: 1, borderColor: '#FFFDF7' }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { font: { family: 'IBM Plex Sans', size: 11 }, boxWidth: 12 } } }
+  }
+});
+
+new Chart(document.getElementById('chart-prefixo'), {
+  type: 'bar',
+  data: {
+    labels: porPrefixo.map(p => p.label),
+    datasets: [{ label: 'Devoluções', data: porPrefixo.map(p => p.count), backgroundColor: '#1B2A4A', borderRadius: 3 }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { x: { ticks: { precision: 0 }, grid: { color: '#ECE6D4' } }, y: { grid: { display: false } } }
+  }
+});
+
+new Chart(document.getElementById('chart-periodo'), {
+  type: 'line',
+  data: {
+    labels: porPeriodo.map(p => { const [y, m] = p.mes.split('-'); return `${m}/${y}`; }),
+    datasets: [{
+      label: 'Devoluções', data: porPeriodo.map(p => p.count),
+      borderColor: '#A8762B', backgroundColor: 'rgba(168,118,43,0.15)',
+      tension: .25, fill: true, pointBackgroundColor: '#1B2A4A', pointRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#ECE6D4' } }, x: { grid: { display: false } } }
+  }
+});
+
+function renderRanking(containerId, ranking) {
+  const el = document.getElementById(containerId);
+  const max = ranking.length ? ranking[0].count : 1;
+  el.innerHTML = ranking.slice(0, 8).map((item, idx) => `
+    <div class="ranking-row">
+      <span class="rk-num">${idx + 1}</span>
+      <span class="rk-label">${item.label}</span>
+      <span class="rk-bar-wrap"><span class="rk-bar" style="width:${(item.count / max * 100).toFixed(0)}%"></span></span>
+      <span class="rk-count">${item.count}</span>
+    </div>
+  `).join('');
+}
+renderRanking('ranking-prefixos', porPrefixo);
+renderRanking('ranking-motivos', porMotivo);
+</script>
+{% endif %}
+{% endblock %}

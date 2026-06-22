@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set active_tab = 'admin' %}
+{% set active_sub = 'backup' %}
+{% block title %}Administração — Backup{% endblock %}
+{% block content %}
+{% include "admin/_subnav.html" %}
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2><span class="eyebrow">Backup</span>Exportar dados</h2>
+    <p class="muted" style="font-size:13px;">Os dados ficam no banco SQLite do servidor. Exporte regularmente para ter uma cópia de segurança.</p>
+    <a href="{{ url_for('admin_export_json') }}" class="btn secondary" style="margin-right:10px;">Exportar backup (.json)</a>
+    <a href="{{ url_for('admin_export_csv') }}" class="btn secondary">Exportar registros (.csv)</a>
+  </div>
+
+  <div class="card">
+    <h2><span class="eyebrow">Backup</span>Importar dados</h2>
+    <p class="muted" style="font-size:13px;">Importar um backup <strong>substitui</strong> todos os dados atuais do banco.</p>
+    <form method="post" action="{{ url_for('admin_import_json') }}" enctype="multipart/form-data" onsubmit="return confirm('Importar este backup vai substituir todos os dados atuais. Continuar?');">
+      <div class="field">
+        <input type="file" name="arquivo" accept="application/json" required>
+      </div>
+      <button type="submit" class="btn secondary">Importar backup</button>
+    </form>
+
+    <hr class="sep">
+
+    <h2 style="font-size:14.5px;color:var(--red);margin-bottom:10px;">Apagar todos os dados</h2>
+    <form method="post" action="{{ url_for('admin_clear_all') }}" onsubmit="return confirm('Isso vai apagar TODOS os prefixos, motivos e registros. Esta ação não pode ser desfeita. Continuar?');">
+      <div class="field">
+        <label for="senha_confirmacao">Confirme sua senha para apagar tudo</label>
+        <input type="password" id="senha_confirmacao" name="senha_confirmacao" required>
+      </div>
+      <button type="submit" class="btn danger">Apagar todos os dados</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

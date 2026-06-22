@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% set active_tab = 'registrar' %}
+{% block title %}Registrar devolução{% endblock %}
+{% block content %}
+<div class="grid cols-2">
+  <div class="card">
+    <h2><span class="eyebrow">Novo lançamento</span>Registrar devolução indevida</h2>
+
+    {% if not prefixos or not motivos %}
+      <div class="empty-state">
+        Nenhum prefixo ou motivo cadastrado ainda.<br>
+        {% if is_admin %}
+          <a href="{{ url_for('admin_prefixos') }}" class="btn secondary" style="margin-top:10px;">Cadastrar na Administração</a>
+        {% else %}
+          Peça a um administrador para cadastrar os PSOs/CENOPs e os motivos antes de registrar devoluções.
+        {% endif %}
+      </div>
+    {% else %}
+    <form method="post" id="form-registro">
+      <div class="field">
+        <label for="numero">Número do alvará</label>
+        <input type="text" id="numero" name="numero" class="mono-field" placeholder="AAAA/SSSSSSSSS" maxlength="14" required>
+        <div class="hint">Formato: ano (4 dígitos) / número sequencial (9 dígitos). Ex.: 2026/000123456</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="prefixo_id">PSO / CENOP que devolveu (prefixo)</label>
+          <select id="prefixo_id" name="prefixo_id" required>
+            <option value="">Selecione...</option>
+            {% for p in prefixos %}
+              <option value="{{ p.id }}">{{ p.prefixo }} — {{ p.nome or 'sem nome' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="data">Data da devolução</label>
+          <input type="date" id="data" name="data" value="{{ today }}">
+        </div>
+      </div>
+      <div class="field">
+        <label for="motivo_id">Motivo da devolução indevida</label>
+        <select id="motivo_id" name="motivo_id" required>
+          <option value="">Selecione...</option>
+          {% for m in motivos %}
+            <option value="{{ m.id }}">{{ m.descricao }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="observacao">Observação (opcional)</label>
+        <textarea id="observacao" name="observacao" placeholder="Detalhes adicionais sobre a devolução..."></textarea>
+      </div>
+      <button type="submit" class="btn">Registrar devolução</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2><span class="eyebrow">Livro de registro</span>Últimos lançamentos</h2>
+    <form method="get" class="field" style="margin-bottom:12px;">
+      <input type="text" name="busca" value="{{ busca }}" placeholder="Buscar por número do alvará...">
+    </form>
+    <div style="max-height:480px;overflow:auto;">
+      {% if registros %}
+      <table class="ledger">
+        <thead><tr><th>Alvará</th><th>Prefixo</th><th>Motivo</th><th>Data</th><th></th></tr></thead>
+        <tbody>
+          {% for r in registros %}
+          <tr>
+            <td class="num">{{ r.numero }}</td>
+            <td><span class="pill">{{ r.prefixo_codigo or '????' }}</span></td>
+            <td style="max-width:220px;">{{ r.motivo_descricao or '(motivo removido)' }}</td>
+            <td class="muted">{{ r.data }}</td>
+            <td>
+              <form method="post" action="{{ url_for('excluir_registro', registro_id=r.id) }}" onsubmit="return confirm('Excluir este registro de devolução?');">
+                <button type="submit" class="btn danger small">Excluir</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty-state">Nenhuma devolução registrada ainda.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Insere a barra "/" automaticamente ao digitar o número do alvará
+const inputNumero = document.getElementById('numero');
+if (inputNumero) {
+  inputNumero.addEventListener('input', () => {
+    let digits = inputNumero.value.replace(/\D/g, '').slice(0, 13);
+    inputNumero.value = digits.length > 4 ? digits.slice(0,4) + '/' + digits.slice(4) : digits;
+  });
+}
+</script>
+{% endblock %}

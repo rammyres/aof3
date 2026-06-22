@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Protocolo de Devoluções{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<header class="letterhead">
+  <div class="lh-inner">
+    <div class="seal">
+      <div class="badge">A&deg;</div>
+      <div>
+        <h1>Protocolo de Devoluções</h1>
+        <div class="sub">Controle de devoluções indevidas de alvarás · PSO / CENOP</div>
+      </div>
+    </div>
+    <div class="session-info">
+      Lei 9.099/95 · CPC/2015<br>
+      {% if is_admin %}
+        administração: {{ session.get('admin_user') }} · <a href="{{ url_for('admin_logout') }}">sair</a>
+      {% else %}
+        <a href="{{ url_for('admin_login') }}">acesso administrativo</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <a href="{{ url_for('registrar') }}" class="{{ 'active' if active_tab == 'registrar' }}">Registrar</a>
+  <a href="{{ url_for('estatisticas') }}" class="{{ 'active' if active_tab == 'estatisticas' }}">Estatísticas</a>
+  <a href="{{ url_for('admin_prefixos') if is_admin else url_for('admin_login') }}" class="{{ 'active' if active_tab == 'admin' }}">Administração</a>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-stack">
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="app-footer">{{ current_year }} · dados armazenados em banco SQLite local · área de administração protegida por senha</footer>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

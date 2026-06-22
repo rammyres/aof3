@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_tab = 'admin' %}
+{% set active_sub = 'prefixos' %}
+{% block title %}Administração — Prefixos{% endblock %}
+{% block content %}
+{% include "admin/_subnav.html" %}
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2><span class="eyebrow">Cadastro</span>Novo PSO / CENOP</h2>
+    <form method="post">
+      <div class="field-row">
+        <div class="field">
+          <label for="prefixo">Prefixo (PPPP)</label>
+          <input type="text" id="prefixo" name="prefixo" class="mono-field" maxlength="4" placeholder="0000" required>
+        </div>
+        <div class="field">
+          <label for="nome">Nome / descrição</label>
+          <input type="text" id="nome" name="nome" placeholder="Ex.: CENOP São Paulo">
+        </div>
+      </div>
+      <button type="submit" class="btn">Adicionar prefixo</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2><span class="eyebrow">Lista atual</span>PSOs / CENOPs cadastrados</h2>
+    <div style="max-height:420px;overflow:auto;">
+      {% if prefixos %}
+      <table class="ledger">
+        <thead><tr><th>Prefixo</th><th>Nome</th><th></th></tr></thead>
+        <tbody>
+          {% for p in prefixos %}
+          <tr>
+            <td class="num">{{ p.prefixo }}</td>
+            <td>{{ p.nome or '—' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_excluir_prefixo', prefixo_id=p.id) }}" onsubmit="return confirm('Remover este prefixo? Registros existentes serão mantidos.');">
+                <button type="submit" class="btn danger small">Remover</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty-state">Nenhum prefixo cadastrado.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+const inputPrefixo = document.getElementById('prefixo');
+inputPrefixo.addEventListener('input', () => {
+  inputPrefixo.value = inputPrefixo.value.replace(/\D/g, '').slice(0, 4);
+});
+</script>
+{% endblock %}
